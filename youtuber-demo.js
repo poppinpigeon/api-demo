@@ -35,12 +35,18 @@ db.set(id++, youtuber3)
 
 //유튜버 전체 조회
 app.get('/youtubers', (req, res) => {
-    var youtubers = {}
-    db.forEach(function (value, key) {
-        youtubers[key] = value
-    })
-
-    res.json(youtubers)
+    let youtubers = {}
+    if(db.size > 0){
+        db.forEach(function (value, key) {
+            youtubers[key] = value
+        })
+    
+        res.json(youtubers)
+    }else{
+        res.status(404).json({
+            message : "조회할 유튜버가 없습니다."
+        })
+    }
 })
 
 //유튜버 개별 조회
@@ -60,12 +66,16 @@ app.get('/youtubers/:id', function (req, res) {
 //POST 새로운 유튜버 추가
 app.use(express.json())
 app.post('/youtubers', (req, res) => {
-    console.log(req.body)
-
-    db.set(id++, req.body) //db에 새 유튜버 정보 추가
-    res.json({
-        message: `${db.get(id - 1).channelTitle}님, 유튜브에 오신 것을 축하드립니다!`
-    })
+    if(req.body.channelTitle){
+        db.set(id++, req.body) //db에 새 유튜버 정보 추가
+        res.status(201).json({
+            message: `${db.get(id - 1).channelTitle}님, 유튜브에 오신 것을 축하드립니다!`
+        })
+    }else{
+        res.status(400).json({
+            message : "채널명을 입력해주세요."
+        })
+    }
 })
 
 //DELETE 유튜버 개별 삭제
@@ -75,7 +85,7 @@ app.delete('/youtubers/:id', function (req, res) {
 
     let youtuber = db.get(id)
     if (youtuber == undefined) {
-        res.json({
+        res.status(404).json({
             message: `요청하신 ${id}번은 없는 유튜버입니다.`
         })
     } else {
@@ -90,13 +100,15 @@ app.delete('/youtubers/:id', function (req, res) {
 app.delete('/youtubers', (req, res) => {
 
     let msg = ""
+    let status = 200
     if (db.size > 0) {
         db.clear()
         msg = "전체 유튜버가 삭제되었습니다."
     } else {
         msg = "삭제할 유튜버가 없습니다."
+        status = 404
     }
-    res.json({
+    res.status(status).json({
         message: msg
     })
 })
@@ -108,7 +120,7 @@ app.put('/youtubers/:id', (req, res) => {
 
     let youtuber = db.get(id)
     if (youtuber == undefined) {
-        res.json({
+        res.status(404).json({
             message: `요청하신 ${id}번은 없는 유튜버입니다.`
         })
     } else {
